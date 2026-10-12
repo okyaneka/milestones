@@ -1,0 +1,96 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validProject(uid) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          "name",
+          "description",
+          "targetDate",
+          "ownerUid",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.keys().hasOnly([
+          "name",
+          "description",
+          "targetDate",
+          "ownerUid",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.description is string
+        && data.description.size() <= 2000
+        && data.targetDate is string
+        && data.targetDate.size() <= 10
+        && data.ownerUid == uid
+        && data.createdAt is string
+        && data.updatedAt is string;
+    }
+
+    function validMilestone(uid, projectId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          "title",
+          "description",
+          "dueDate",
+          "status",
+          "order",
+          "ownerUid",
+          "projectId",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.keys().hasOnly([
+          "title",
+          "description",
+          "dueDate",
+          "status",
+          "order",
+          "ownerUid",
+          "projectId",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 160
+        && data.description is string
+        && data.description.size() <= 2000
+        && data.dueDate is string
+        && data.dueDate.size() <= 10
+        && data.status in ["planned", "in-progress", "completed"]
+        && data.order is int
+        && data.ownerUid == uid
+        && data.projectId == projectId
+        && data.createdAt is string
+        && data.updatedAt is string;
+    }
+
+    match /users/{uid}/projects/{projectId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validProject(uid);
+      allow update: if isOwner(uid)
+        && validProject(uid)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(uid);
+
+      match /milestones/{milestoneId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validMilestone(uid, projectId);
+        allow update: if isOwner(uid)
+          && validMilestone(uid, projectId)
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(uid);
+      }
+    }
+  }
+}

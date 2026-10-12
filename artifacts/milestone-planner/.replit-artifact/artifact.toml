@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Milestone Planner"
+description = "A project milestone planning app for organizing goals, target dates, and progress, with data stored in Firebase Firestore."
+version = "1.0.0"
+id = "artifacts/milestone-planner"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18447
+
+[services.development]
+run = "pnpm --filter @workspace/milestone-planner run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/milestone-planner", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/milestone-planner/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18447"
+BASE_PATH = "/"
