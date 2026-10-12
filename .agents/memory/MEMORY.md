@@ -1,0 +1,1 @@
+- [GitHub CLI authentication](github-cli-auth.md) — In this Repl, Git remote access may work even when `gh` is not authenticated; don't request a token.
